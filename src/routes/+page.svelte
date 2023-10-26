@@ -11,7 +11,7 @@
 {#if $board.length}
   <!-- Game stats & controls -->
   <div
-    class="flex items-center justify-between gap-x-8 gap-y-4 rounded-md bg-gray-200 p-4 shadow dark:bg-gray-800 md:w-1/4 md:flex-col md:justify-start"
+    class="flex items-center justify-between gap-x-8 gap-y-4 rounded-md bg-white p-4 shadow dark:bg-gray-800 md:w-1/4 md:flex-col md:justify-start"
   >
     <div class="flex items-center gap-2">
       {#if $winner}
@@ -47,7 +47,7 @@
       {#each $board as col, colIndex (colIndex)}
         <div
           class="flex grow flex-col-reverse bg-blue-600 {!$winner && board.isValidColumn(colIndex)
-            ? 'hover:brightness-110'
+            ? 'hover:bg-blue-500'
             : ''}"
         >
           {#each col as cell, rowIndex (rowIndex)}
