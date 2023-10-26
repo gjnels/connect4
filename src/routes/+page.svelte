@@ -30,6 +30,12 @@
         >
       {/if}
     </div>
+    <button
+      class="rounded-md bg-blue-600 px-3 py-1.5 font-medium uppercase text-white shadow hover:brightness-110"
+      on:click={game.newGame}
+    >
+      New Game
+    </button>
   </div>
 
   <!-- Game board -->
