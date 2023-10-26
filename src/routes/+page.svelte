@@ -1,5 +1,6 @@
 <script lang="ts">
   import { BOARD_HEIGHT, BOARD_WIDTH, Cell, board, game } from '$lib'
+  import BoardCell from '$lib/components/BoardCell.svelte'
 
   const { winner, turn } = game
   game.newGame()
@@ -51,30 +52,7 @@
             : ''}"
         >
           {#each col as cell, rowIndex (rowIndex)}
-            {@const winningCell =
-              $winner &&
-              !!$winner.cells.find((cell) => cell[0] === colIndex && cell[1] === rowIndex)}
-            <button
-              on:click={() => game.takeTurn(colIndex)}
-              class="flex grow items-center justify-center {!$winner &&
-              board.isValidColumn(colIndex)
-                ? 'cursor-pointer'
-                : 'cursor-not-allowed'}"
-            >
-              <span
-                class="aspect-square w-3/4 rounded-full shadow-inner shadow-black {cell === Cell.RED
-                  ? 'bg-red-500'
-                  : cell === Cell.YELLOW
-                  ? 'bg-yellow-400'
-                  : 'bg-gray-100 dark:bg-gray-900'} {$winner
-                  ? winningCell
-                    ? 'ring-4 ring-white'
-                    : cell !== Cell.EMPTY
-                    ? 'brightness-75'
-                    : ''
-                  : ''}"
-              />
-            </button>
+            <BoardCell {cell} position={{ row: rowIndex, column: colIndex }} />
           {/each}
         </div>
       {/each}
