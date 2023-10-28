@@ -46,15 +46,17 @@
       style="aspect-ratio: {BOARD_WIDTH} / {BOARD_HEIGHT};"
     >
       {#each $board as col, colIndex (colIndex)}
-        <div
-          class="flex grow flex-col-reverse bg-blue-600 {!$winner && board.isValidColumn(colIndex)
+        <button
+          on:click={() => game.takeTurn(colIndex)}
+          class="flex grow flex-col-reverse bg-blue-600 outline-none focus-visible:bg-blue-500 {!$winner &&
+          board.isValidColumn(colIndex)
             ? 'hover:bg-blue-500'
             : ''}"
         >
           {#each col as cell, rowIndex (rowIndex)}
             <BoardCell {cell} position={{ row: rowIndex, column: colIndex }} />
           {/each}
-        </div>
+        </button>
       {/each}
     </div>
   </div>

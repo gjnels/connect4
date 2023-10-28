@@ -11,9 +11,8 @@
   $: losingCell = $winner && !winningCell && cell !== Cell.EMPTY
 </script>
 
-<button
-  on:click={() => game.takeTurn(column)}
-  class="flex grow items-center justify-center overflow-hidden {!$winner &&
+<div
+  class="flex grow items-center justify-center overflow-hidden outline-none {!$winner &&
   board.isValidColumn(column)
     ? 'cursor-pointer'
     : 'cursor-not-allowed'}"
@@ -29,7 +28,7 @@
       <span class="block h-full w-full rounded-full bg-white/25 dark:bg-black/25"></span>
     {/if}
   </span>
-</button>
+</div>
 
 <style lang="postcss">
   .red {
