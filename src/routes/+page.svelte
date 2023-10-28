@@ -1,11 +1,21 @@
 <script lang="ts">
   import { BOARD_HEIGHT, BOARD_WIDTH, Cell, board, game } from '$lib'
   import BoardCell from '$lib/components/BoardCell.svelte'
+  import GameOverDialog from '$lib/components/GameOverDialog.svelte'
 
   const { winner, turn } = game
   game.newGame()
   for (let i = 0; i < 20; i++) {
     game.takeTurn(Math.floor(Math.random() * BOARD_WIDTH))
+  }
+
+  $: gameOver = !!$winner || board.isFull()
+
+  let dialogOpen = false
+  $: {
+    if (gameOver) {
+      dialogOpen = true
+    }
   }
 </script>
 
@@ -15,13 +25,17 @@
     class="flex items-center justify-between gap-x-8 gap-y-4 rounded-md bg-white p-4 shadow dark:bg-gray-800 md:w-1/4 md:flex-col md:justify-start"
   >
     <div class="flex items-center gap-2">
-      {#if $winner}
-        <span class="text-lg font-bold">Winner</span>
-        <span
-          class="rounded-full px-3 py-1 font-medium {$turn === Cell.RED
-            ? 'bg-red-500 text-white'
-            : 'bg-yellow-400 text-black'}">{$turn === Cell.RED ? 'Red' : 'Yellow'}</span
-        >
+      {#if gameOver}
+        {#if $winner}
+          <span class="text-lg font-bold">Winner</span>
+          <span
+            class="rounded-full px-3 py-1 font-medium {$winner.winner === Cell.RED
+              ? 'bg-red-500 text-white'
+              : 'bg-yellow-400 text-black'}">{$winner.winner === Cell.RED ? 'Red' : 'Yellow'}</span
+          >
+        {:else}
+          <span class="text-lg font-semibold text-gray-900 dark:text-gray-100">It's a tie!</span>
+        {/if}
       {:else}
         <span>Next Move</span>
         <span
@@ -61,3 +75,5 @@
     </div>
   </div>
 {/if}
+
+<GameOverDialog bind:open={dialogOpen} />
