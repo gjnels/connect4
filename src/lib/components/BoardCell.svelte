@@ -12,7 +12,7 @@
 </script>
 
 <div
-  class="flex grow items-center justify-center overflow-hidden outline-none {!$winner &&
+  class="flex w-full grow items-center justify-center overflow-hidden outline-none {!$winner &&
   board.isValidColumn(column)
     ? 'cursor-pointer'
     : 'cursor-not-allowed'}"
