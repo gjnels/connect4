@@ -1,27 +1,23 @@
 <script lang="ts">
-  import { board, Cell } from '$lib/board'
-  import { game } from '$lib/game'
+  import { game, Cell, ROW_COUNT } from '$lib'
 
-  export let cell: Cell
-  export let position: { row: number; column: number }
+  export let row: number
+  export let column: number
 
-  const { winner } = game
-  const { row, column } = position
-  $: winningCell = $winner && !!$winner.cells.find((cell) => cell[0] === column && cell[1] === row)
-  $: losingCell = $winner && !winningCell && cell !== Cell.EMPTY
+  const { board, status } = game
+  $: cell = $board[ROW_COUNT - 1 - row][column]
+  $: winningCell =
+    $status.type === 'win' &&
+    !!$status.cells.find((cell) => cell[0] === ROW_COUNT - 1 - row && cell[1] === column)
+  $: losingCell = $status.type === 'win' && !winningCell && cell !== Cell.EMPTY
 </script>
 
-<div
-  class="flex w-full grow items-center justify-center overflow-hidden outline-none {!$winner &&
-  board.isValidColumn(column)
-    ? 'cursor-pointer'
-    : 'cursor-not-allowed'}"
->
+<div class="flex w-full flex-1 items-center justify-center overflow-hidden outline-none">
   <span
     class="aspect-square w-3/4 rounded-full shadow-inner shadow-black"
     class:empty={cell === Cell.EMPTY}
-    class:red={cell === Cell.RED}
-    class:yellow={cell === Cell.YELLOW}
+    class:red={cell === Cell.PLAYER_1}
+    class:yellow={cell === Cell.PLAYER_2}
     class:winner={winningCell}
   >
     {#if losingCell}

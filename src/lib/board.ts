@@ -1,71 +1,40 @@
-import { get, writable } from 'svelte/store'
+import { get, writable, type Subscriber, type Writable } from 'svelte/store'
+
+export const ROW_COUNT = 6
+export const COLUMN_COUNT = 7
 
 export enum Cell {
   EMPTY,
-  RED,
-  YELLOW
+  PLAYER_1,
+  PLAYER_2
 }
 
-export const BOARD_WIDTH = 7
-export const BOARD_HEIGHT = 6
+export type Piece = Cell.PLAYER_1 | Cell.PLAYER_2
 
-const boardStore = writable<Cell[][]>([])
-
-// create a new array of arrays filled with empty cells
-// outer array holds each row, with inner arrays holding cells for each column
-function createNewBoard() {
-  const newBoard: Cell[][] = []
-  for (let row = 0; row < BOARD_WIDTH; row++) {
-    const newRow: Cell[] = []
-    for (let col = 0; col < BOARD_HEIGHT; col++) {
-      newRow.push(Cell.EMPTY)
-    }
-    newBoard.push(newRow)
+function createEmptyBoard(): Cell[][] {
+  const board: Cell[][] = []
+  for (let r = 0; r < ROW_COUNT; r++) {
+    board.push(Array(COLUMN_COUNT).fill(Cell.EMPTY))
   }
-  boardStore.set(newBoard)
+  return board
 }
 
-// determine if the given column is within the bounds of the board and has
-// at least one empty cell
-function isValidColumn(col: number) {
-  if (col < 0 || col >= BOARD_WIDTH) return false
-  return get(boardStore)[col].some((row) => row === Cell.EMPTY)
-}
-
-// add the given marker to the first empty cell in the given column
-// returns true or false depending on if the move was made
-function placeMarker(col: number, marker: Cell.RED | Cell.YELLOW) {
-  if (!isValidColumn(col)) return false
-  boardStore.update((board) => {
-    const row = board[col].findIndex((cell) => cell === Cell.EMPTY)
-    board[col][row] = marker
-    return board
-  })
-  return true
-}
-
-// check if there are no empty cells on the board
-function isFull() {
-  return get(boardStore).every((col) => col.every((cell) => cell !== Cell.EMPTY))
-}
-
-// determine if there are 4 pieces in a row of the same color horizontally
-function checkForHorizontalWin() {
-  for (let col = 0; col <= BOARD_WIDTH - 4; col++) {
-    for (let cell = 0; cell < BOARD_HEIGHT; cell++) {
-      if (get(board)[col][cell] === Cell.EMPTY) continue
+function checkForHorizontalWin(board: Cell[][]) {
+  for (let r = 0; r < ROW_COUNT; r++) {
+    for (let c = 0; c < COLUMN_COUNT - 3; c++) {
       if (
-        get(board)[col][cell] === get(board)[col + 1][cell] &&
-        get(board)[col][cell] === get(board)[col + 2][cell] &&
-        get(board)[col][cell] === get(board)[col + 3][cell]
+        board[r][c] !== Cell.EMPTY &&
+        board[r][c] === board[r][c + 1] &&
+        board[r][c] === board[r][c + 2] &&
+        board[r][c] === board[r][c + 3]
       ) {
         return {
-          winner: get(board)[col][cell],
+          player: board[r][c],
           cells: [
-            [col, cell],
-            [col + 1, cell],
-            [col + 2, cell],
-            [col + 3, cell]
+            [r, c],
+            [r, c + 1],
+            [r, c + 2],
+            [r, c + 3]
           ]
         }
       }
@@ -74,23 +43,22 @@ function checkForHorizontalWin() {
   return false
 }
 
-// determine if there are 4 pieces in a row of the same color vertically
-function checkForVerticalWin() {
-  for (let col = 0; col < BOARD_WIDTH; col++) {
-    for (let cell = 0; cell <= BOARD_HEIGHT - 4; cell++) {
-      if (get(board)[col][cell] === Cell.EMPTY) continue
+function checkForVerticalWin(board: Cell[][]) {
+  for (let r = 0; r < ROW_COUNT - 3; r++) {
+    for (let c = 0; c < COLUMN_COUNT; c++) {
       if (
-        get(board)[col][cell] === get(board)[col][cell + 1] &&
-        get(board)[col][cell] === get(board)[col][cell + 2] &&
-        get(board)[col][cell] === get(board)[col][cell + 3]
+        board[r][c] !== Cell.EMPTY &&
+        board[r][c] === board[r + 1][c] &&
+        board[r][c] === board[r + 2][c] &&
+        board[r][c] === board[r + 3][c]
       ) {
         return {
-          winner: get(board)[col][cell],
+          player: board[r][c],
           cells: [
-            [col, cell],
-            [col, cell + 1],
-            [col, cell + 2],
-            [col, cell + 3]
+            [r, c],
+            [r + 1, c],
+            [r + 2, c],
+            [r + 3, c]
           ]
         }
       }
@@ -99,55 +67,154 @@ function checkForVerticalWin() {
   return false
 }
 
-function checkForDiagonalWin() {
-  for (let col = 0; col <= BOARD_WIDTH - 4; col++) {
-    for (let cell = 0; cell <= BOARD_HEIGHT - 4; cell++) {
-      if (get(board)[col][cell] === Cell.EMPTY) continue
+function checkForDiagonalUpWin(board: Cell[][]) {
+  for (let r = 0; r < ROW_COUNT - 3; r++) {
+    for (let c = 0; c < COLUMN_COUNT - 3; c++) {
       if (
-        get(board)[col][cell] === get(board)[col + 1][cell + 1] &&
-        get(board)[col][cell] === get(board)[col + 2][cell + 2] &&
-        get(board)[col][cell] === get(board)[col + 3][cell + 3]
-      )
+        board[r][c] !== Cell.EMPTY &&
+        board[r][c] === board[r + 1][c + 1] &&
+        board[r][c] === board[r + 2][c + 2] &&
+        board[r][c] === board[r + 3][c + 3]
+      ) {
         return {
-          winner: get(board)[col][cell],
+          player: board[r][c],
           cells: [
-            [col, cell],
-            [col + 1, cell + 1],
-            [col + 2, cell + 2],
-            [col + 3, cell + 3]
+            [r, c],
+            [r + 1, c + 1],
+            [r + 2, c + 2],
+            [r + 3, c + 3]
           ]
         }
-    }
-    for (let cell = 3; cell < BOARD_HEIGHT; cell++) {
-      if (get(board)[col][cell] === Cell.EMPTY) continue
-      if (
-        get(board)[col][cell] === get(board)[col + 1][cell - 1] &&
-        get(board)[col][cell] === get(board)[col + 2][cell - 2] &&
-        get(board)[col][cell] === get(board)[col + 3][cell - 3]
-      )
-        return {
-          winner: get(board)[col][cell],
-          cells: [
-            [col, cell],
-            [col + 1, cell - 1],
-            [col + 2, cell - 2],
-            [col + 3, cell - 3]
-          ]
-        }
+      }
     }
   }
   return false
 }
 
-function checkForWin() {
-  return checkForVerticalWin() || checkForHorizontalWin() || checkForDiagonalWin()
+function checkForDiagonalDownWin(board: Cell[][]) {
+  for (let r = 3; r < ROW_COUNT; r++) {
+    for (let c = 0; c < COLUMN_COUNT - 3; c++) {
+      if (
+        board[r][c] !== Cell.EMPTY &&
+        board[r][c] === board[r - 1][c + 1] &&
+        board[r][c] === board[r - 2][c + 2] &&
+        board[r][c] === board[r - 3][c + 3]
+      ) {
+        return {
+          player: board[r][c],
+          cells: [
+            [r, c],
+            [r - 1, c + 1],
+            [r - 2, c + 2],
+            [r - 3, c + 3]
+          ]
+        }
+      }
+    }
+  }
+  return false
 }
 
-export const board = {
-  subscribe: boardStore.subscribe,
-  createNewBoard,
-  placeMarker,
-  isValidColumn,
-  isFull,
-  checkForWin
+export class Board {
+  public state: Writable<Cell[][]>
+
+  constructor(state?: Cell[][]) {
+    this.state = writable(state || createEmptyBoard())
+  }
+
+  reset() {
+    this.state.set(createEmptyBoard())
+  }
+
+  copy() {
+    return get(this.state).map((row) => row.map((cell) => cell))
+  }
+
+  print() {
+    let output = '\n'
+    const c_sep = '|'
+    const r_sep = '-'
+    for (let r = ROW_COUNT - 1; r >= 0; r--) {
+      for (let c = 0; c < COLUMN_COUNT; c++) {
+        output += c_sep + ' ' + get(this.state)[r][c] + ' '
+      }
+      output += c_sep + '\n' // end of row
+      for (let c = 0; c < COLUMN_COUNT; c++) {
+        output += c_sep + r_sep + r_sep + r_sep
+      }
+      output += c_sep + '\n' // end of separator row
+    }
+    output += '\n'
+    console.log(output)
+  }
+
+  placePiece(piece: Piece, column: number) {
+    const row = this.getNextOpenRow(column)
+    if (row !== undefined) {
+      this.state.update((state) => {
+        state[row][column] = piece
+        return state
+      })
+      return true
+    }
+    return false
+  }
+
+  isValidLocation(column: number) {
+    return get(this.state)[ROW_COUNT - 1][column] === Cell.EMPTY
+  }
+
+  getValidLocations() {
+    const locations = []
+    for (let c = 0; c < COLUMN_COUNT; c++) {
+      if (this.isValidLocation(c)) locations.push(c)
+    }
+    return locations
+  }
+
+  getNextOpenRow(column: number) {
+    for (let r = 0; r < ROW_COUNT; r++) {
+      if (get(this.state)[r][column] === Cell.EMPTY) {
+        return r
+      }
+    }
+  }
+
+  isEmpty() {
+    const state = get(this.state)
+    for (let r = 0; r < ROW_COUNT; r++) {
+      for (let c = 0; c < COLUMN_COUNT; c++) {
+        if (state[r][c] !== Cell.EMPTY) {
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  isFull() {
+    const state = get(this.state)
+    for (let r = 0; r < ROW_COUNT; r++) {
+      for (let c = 0; c < COLUMN_COUNT; c++) {
+        if (state[r][c] === Cell.EMPTY) {
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  checkForWinner() {
+    const state = get(this.state)
+    return (
+      checkForHorizontalWin(state) ||
+      checkForVerticalWin(state) ||
+      checkForDiagonalUpWin(state) ||
+      checkForDiagonalDownWin(state)
+    )
+  }
+
+  subscribe(run: Subscriber<Cell[][]>) {
+    return this.state.subscribe(run)
+  }
 }
