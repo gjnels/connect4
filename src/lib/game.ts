@@ -3,37 +3,45 @@ import { Board, Cell } from './board'
 import { Player } from './player'
 import { getBestMove } from './ai'
 
+let turnTimeout: number
+
 class Game {
   public board: Board
   public turn: Writable<Player>
   public player1: Player
   public player2: Player
   public status: Writable<
-    { type: 'playing' | 'tie' } | { type: 'win'; player: Player; cells: number[][] }
+    { type: 'menu' | 'playing' | 'tie' } | { type: 'win'; player: Player; cells: number[][] }
   >
 
   constructor() {
     this.board = new Board()
-    this.player1 = new Player(Cell.PLAYER_1, 'red')
+    this.player1 = new Player(Cell.PLAYER_1, 'red', false)
     this.player2 = new Player(Cell.PLAYER_2, 'yellow', true)
     this.turn = writable(this.player1)
-    this.status = writable({ type: 'playing' })
-
-    this.checkAiTurn()
+    this.status = writable({ type: 'menu' })
   }
 
   new() {
+    clearTimeout(turnTimeout)
     this.board.reset()
     this.turn.set(this.player1)
     this.status.set({ type: 'playing' })
     this.checkAiTurn()
   }
 
+  showMenu() {
+    clearTimeout(turnTimeout)
+    this.status.set({ type: 'menu' })
+  }
+
   checkAiTurn() {
     const player = get(this.turn)
     if (player.ai) {
-      setTimeout(() => {
-        const column = getBestMove(this.board, 3, player.piece)
+      const depth = player.difficulty === 'easy' ? 1 : player.difficulty === 'medium' ? 3 : 5
+      clearTimeout(turnTimeout)
+      turnTimeout = setTimeout(() => {
+        const column = getBestMove(this.board, depth, player.piece)
         this.takeTurn(column)
       }, 500)
     }

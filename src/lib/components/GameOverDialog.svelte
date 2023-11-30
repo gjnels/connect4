@@ -52,6 +52,15 @@
           View Board
         </button>
       </div>
+      <button
+        class="mt-3 self-center rounded-md bg-blue-600 px-3 py-1.5 font-medium uppercase text-white shadow hover:brightness-110"
+        on:click={() => {
+          game.showMenu()
+          open = false
+        }}
+      >
+        Main Menu
+      </button>
     </div>
   </div>
 {/if}
