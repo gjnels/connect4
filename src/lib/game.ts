@@ -13,6 +13,7 @@ class Game {
   public status: Writable<
     { type: 'menu' | 'playing' | 'tie' } | { type: 'win'; player: Player; cells: number[][] }
   >
+  public guessing: Writable<boolean>
 
   constructor() {
     this.board = new Board()
@@ -20,6 +21,7 @@ class Game {
     this.player2 = new Player(Cell.PLAYER_2, 'yellow', true)
     this.turn = writable(this.player1)
     this.status = writable({ type: 'menu' })
+    this.guessing = writable(false)
   }
 
   new() {
@@ -28,6 +30,10 @@ class Game {
     this.turn.set(this.player1)
     this.status.set({ type: 'playing' })
     this.checkAiTurn()
+  }
+
+  setGuessing(guessing: boolean) {
+    this.guessing.set(guessing)
   }
 
   showMenu() {
