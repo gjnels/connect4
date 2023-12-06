@@ -14,6 +14,7 @@ class Game {
     { type: 'menu' | 'playing' | 'tie' } | { type: 'win'; player: Player; cells: number[][] }
   >
   public guessing: Writable<boolean>
+  public guessScore: Writable<number>
 
   constructor() {
     this.board = new Board()
@@ -22,18 +23,16 @@ class Game {
     this.turn = writable(this.player1)
     this.status = writable({ type: 'menu' })
     this.guessing = writable(false)
+    this.guessScore = writable(0)
   }
 
   new() {
     clearTimeout(turnTimeout)
     this.board.reset()
     this.turn.set(this.player1)
+    this.guessScore.set(0)
     this.status.set({ type: 'playing' })
-    this.checkAiTurn()
-  }
-
-  setGuessing(guessing: boolean) {
-    this.guessing.set(guessing)
+    if (!get(this.guessing) && this.isAiTurn()) this.takeAiTurn(this.getAiColumn())
   }
 
   showMenu() {
@@ -41,16 +40,29 @@ class Game {
     this.status.set({ type: 'menu' })
   }
 
-  checkAiTurn() {
+  isAiTurn() {
+    return get(this.turn).ai
+  }
+
+  takeAiTurn(column: number) {
+    clearTimeout(turnTimeout)
+    turnTimeout = setTimeout(() => {
+      this.takeTurn(column)
+    }, 500)
+  }
+
+  getAiColumn() {
     const player = get(this.turn)
-    if (player.ai) {
-      const depth = player.difficulty === 'easy' ? 1 : player.difficulty === 'medium' ? 3 : 5
-      clearTimeout(turnTimeout)
-      turnTimeout = setTimeout(() => {
-        const column = getBestMove(this.board, depth, player.piece)
-        this.takeTurn(column)
-      }, 500)
-    }
+    const depth = player.difficulty === 'easy' ? 1 : player.difficulty === 'medium' ? 3 : 5
+    return getBestMove(this.board, depth, player.piece)
+  }
+
+  makeGuess(columnGuess: number) {
+    const validLocations = this.board.getValidLocations()
+    if (!validLocations.includes(columnGuess)) return
+    const column = this.getAiColumn()
+    if (columnGuess === column) this.guessScore.update((s) => s + 100)
+    this.takeAiTurn(column)
   }
 
   takeTurn(column: number) {
@@ -66,7 +78,9 @@ class Game {
         this.status.set({ type: 'tie' })
       } else {
         this.turn.update((t) => (t.piece === Cell.PLAYER_1 ? this.player2 : this.player1))
-        this.checkAiTurn()
+        if (!get(this.guessing) && this.isAiTurn()) {
+          this.takeAiTurn(this.getAiColumn())
+        }
       }
     }
   }
